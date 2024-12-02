@@ -12,7 +12,7 @@ from typing import List
 import av
 import numpy as np
 import pydub
-import streamlit as st
+import streamlit_app as st
 from twilio.rest import Client
 
 from streamlit_webrtc import WebRtcMode, webrtc_streamer
