@@ -1,5 +1,6 @@
 import streamlit as st
-import speech_recognition as sr
+# import speech_recognition as sr
+from streamlit_mic_recorder import mic_recorder, speech_to_text
 import numpy as np
 import pickle  # Assuming your model is saved as a pickle file
 import time
@@ -14,21 +15,28 @@ model = load_model()
 
 # Function to record audio and convert to text
 def record_and_transcribe():
-    recognizer = sr.Recognizer()
-    for index, name in enumerate(sr.Microphone.list_microphone_names()):
-        print(f"Microphone with name {name} found for Microphone(device_index={index})")
-        st.write(f"Microphone with name {name} found for Microphone(device_index={index})")
+    # recognizer = sr.Recognizer()
+    # for index, name in enumerate(sr.Microphone.list_microphone_names()):
+    #     print(f"Microphone with name {name} found for Microphone(device_index={index})")
+    #     st.write(f"Microphone with name {name} found for Microphone(device_index={index})")
 
-    with sr.Microphone(device_index=2) as source:
-        st.info("Listening... Speak into the microphone.")
-        try:
-            audio = recognizer.listen(source, timeout=5)
-            text = recognizer.recognize_google(audio)
-            return text
-        except sr.UnknownValueError:
-            return "Unable to understand the speech."
-        except sr.RequestError:
-            return "Speech recognition service is unavailable."
+    # with sr.Microphone(device_index=2) as source:
+    #     st.info("Listening... Speak into the microphone.")
+    #     try:
+    #         audio = recognizer.listen(source, timeout=5)
+    #         text = recognizer.recognize_google(audio)
+    #         return text
+    #     except sr.UnknownValueError:
+    #         return "Unable to understand the speech."
+    #     except sr.RequestError:
+    #         return "Speech recognition service is unavailable."
+
+    def callback():
+        if st.session_state.my_stt_output:
+            st.write(st.session_state.my_stt_output)
+
+    speech_to_text(key='my_stt', callback=callback)
+
 
 # Fraud detection function
 def detect_fraud(text):
