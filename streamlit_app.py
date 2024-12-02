@@ -1,5 +1,4 @@
 import streamlit as st
-import numpy as np
 from streamlit_webrtc import WebRtcMode, webrtc_streamer
 # from streamlit_webrtc import VideoTransformerBase, VideoTransformerContext
 
@@ -44,18 +43,18 @@ def transcribe(audio_segment: AudioSegment, debug: bool = False) -> str:
         os.remove(tmpfile.name)
         return answer
 
-def frame_energy(frame):
-    """
-    Compute the energy of an audio frame.
+# def frame_energy(frame):
+#     """
+#     Compute the energy of an audio frame.
 
-    Args:
-        frame (VideoTransformerBase.Frame): The audio frame to compute the energy of.
+#     Args:
+#         frame (VideoTransformerBase.Frame): The audio frame to compute the energy of.
 
-    Returns:
-        float: The energy of the frame.
-    """
-    samples = np.frombuffer(frame.to_ndarray().tobytes(), dtype=np.int16)
-    return np.sqrt(np.mean(samples**2))
+#     Returns:
+#         float: The energy of the frame.
+#     """
+#     samples = np.frombuffer(frame.to_ndarray().tobytes(), dtype=np.int16)
+#     return np.sqrt(np.mean(samples**2))
  
 def process_audio_frames(audio_frames, sound_chunk, silence_frames, energy_threshold):
     """
@@ -73,11 +72,11 @@ def process_audio_frames(audio_frames, sound_chunk, silence_frames, energy_thres
     for audio_frame in audio_frames:
         sound_chunk = add_frame_to_chunk(audio_frame, sound_chunk)
 
-        energy = frame_energy(audio_frame)
-        if energy < energy_threshold:
-            silence_frames += 1
-        else:
-            silence_frames = 0
+        # energy = frame_energy(audio_frame)
+        # if energy < energy_threshold:
+        #     silence_frames += 1
+        # else:
+        silence_frames = 0
 
     return sound_chunk, silence_frames
 
@@ -183,7 +182,10 @@ def app_sst(
                 continue
 
             sound_chunk, silence_frames = process_audio_frames(audio_frames, sound_chunk, silence_frames, energy_threshold)
-            sound_chunk, silence_frames = handle_silence(sound_chunk, silence_frames, silence_frames_threshold, text_output)
+            # sound_chunk, silence_frames = handle_silence(sound_chunk, silence_frames, silence_frames_threshold, text_output)
+            if len(sound_chunk) > 0:
+                text = transcribe(sound_chunk.raw_data)
+                text_output.write(text)
         else:
             status_indicator.write("Stopping.")
             if len(sound_chunk) > 0:
