@@ -15,6 +15,10 @@ model = load_model()
 # Function to record audio and convert to text
 def record_and_transcribe():
     recognizer = sr.Recognizer()
+    for index, name in enumerate(sr.Microphone.list_microphone_names()):
+        print("Microphone with name \"{1}\" found for `Microphone(device_index={0})`".format(index, name))
+        st.write("Microphone with name \"{1}\" found for `Microphone(device_index={0})`".format(index, name))
+
     with sr.Microphone(device_index=2) as source:
         st.info("Listening... Speak into the microphone.")
         try:
