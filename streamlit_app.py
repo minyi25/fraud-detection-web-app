@@ -15,7 +15,7 @@ model = load_model()
 # Function to record audio and convert to text
 def record_and_transcribe():
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
+    with sr.Microphone(device_index=2) as source:
         st.info("Listening... Speak into the microphone.")
         try:
             audio = recognizer.listen(source, timeout=5)
