@@ -30,12 +30,11 @@ def record_and_transcribe():
     #         return "Unable to understand the speech."
     #     except sr.RequestError:
     #         return "Speech recognition service is unavailable."
+    return
 
-    def callback():
-        if st.session_state.my_stt_output:
-            st.write(st.session_state.my_stt_output)
-
-    speech_to_text(key='my_stt', callback=callback)
+def callback():
+    if st.session_state.my_stt_output:
+        st.write(st.session_state.my_stt_output)
 
 
 # Fraud detection function
@@ -52,14 +51,15 @@ st.write("Speak into your microphone, and we'll determine if the content is frau
 
 if st.button("Start"):
     st.write("Listening...")
-    speech_text = record_and_transcribe()
+    speech_to_text(key='my_stt', callback=callback)
+    # speech_text = record_and_transcribe()
     
-    if speech_text:
-        st.write(f"Transcribed Text: {speech_text}")
-        with st.spinner("Analyzing for fraud..."):
-            result = detect_fraud(speech_text)
-            time.sleep(2)  # Simulate processing time
-        st.success(f"Fraud Detection Result: {result}")
+    # if speech_text:
+    #     st.write(f"Transcribed Text: {speech_text}")
+    #     with st.spinner("Analyzing for fraud..."):
+    #         result = detect_fraud(speech_text)
+    #         time.sleep(2)  # Simulate processing time
+    #     st.success(f"Fraud Detection Result: {result}")
 
 st.write("This app uses speech recognition and machine learning to detect fraud in real time.")
 
