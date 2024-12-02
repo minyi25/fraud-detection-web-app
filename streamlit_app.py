@@ -49,9 +49,36 @@ def detect_fraud(text):
 st.title("Real-Time Fraud Detection via Speech")
 st.write("Speak into your microphone, and we'll determine if the content is fraudulent.")
 
-if st.button("Start"):
-    st.write("Listening...")
-    speech_to_text(key='my_stt', callback=callback)
+# speech_to_text(key='my_stt', callback=callback)
+
+
+state = st.session_state
+
+if 'text_received' not in state:
+    state.text_received = []
+
+c1, c2 = st.columns(2)
+with c1:
+    st.write("Convert speech to text:")
+with c2:
+    text = speech_to_text(language='en', use_container_width=True, just_once=True, key='STT')
+
+if text:
+    state.text_received.append(text)
+
+for text in state.text_received:
+    st.text(text)
+
+st.write("Record your voice, and play the recorded audio:")
+audio = mic_recorder(start_prompt="⏺️", stop_prompt="⏹️", key='recorder')
+
+if audio:
+    st.audio(audio['bytes'])
+
+
+
+# if st.button("Start"):
+#     st.write("Listening...")
     # speech_text = record_and_transcribe()
     
     # if speech_text:
