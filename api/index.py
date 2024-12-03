@@ -2,6 +2,6 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/test')
+@app.route('/')
 def test():
     return jsonify(True)
