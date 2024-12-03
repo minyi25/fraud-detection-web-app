@@ -1,8 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 import contractions
 import inflect
-import nltk
-import pandas as pd
 import pickle
 import re
 import string
