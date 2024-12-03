@@ -36,7 +36,7 @@ def convert_numbers_to_words_inflect(text):
 def text_transform_custom(message):
     # message = remove_names(message)
     message = message.lower()
-    message = re.sub("[\(\[].*?[\)\]]", "", message)
+    message = re.sub(r'[\(\[].*?[\)\]]', "", message)
     message = convert_numbers_to_words_inflect(message)
     tokens = re.findall(r'\b\w+\b', message)
     y = [token for token in tokens if token.isalnum()]
@@ -66,18 +66,21 @@ def explain_prediction(text):
 def root():
     return render_template('index.html')
 
-@app.route('/api/predict', methods=['POST'])
+@app.route('/api/predict'
+        #    , methods=['POST']
+           )
 def api():
     try:
-        # Get JSON payload
-        data = request.json
+        # # Get JSON payload
+        # data = request.json
 
-        # Validate payload
-        if 'text' not in data:
-            return jsonify({"error": "Missing 'text' in request body"}), 400
+        # # Validate payload
+        # if 'text' not in data:
+        #     return jsonify({"error": "Missing 'text' in request body"}), 400
         
         # Preprocess the text
-        raw_text = data['text']
+        # raw_text = data['text']
+        raw_text = "Hello, this is John from the Fraud Prevention Department at your bank. We’ve detected unauthorized activity on your account, and it’s critical that we address this immediately to secure your funds. A suspicious transaction of $2,000 was flagged, and we’ve temporarily frozen your account for your safety."
         processed_text = [text_transform_custom(raw_text)]
         result, features = explain_prediction(processed_text)
         response = {
