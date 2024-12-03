@@ -1,7 +1,7 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
 @app.route('/test')
 def test():
-    return 'test'
+    return jsonify(True)
