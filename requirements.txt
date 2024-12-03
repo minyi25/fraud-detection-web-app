@@ -1,7 +1,6 @@
 contractions==0.1.73
 Flask==3.0.3
 inflect==7.4.0
-matplotlib==3.9.3
 nltk==3.9.1
 pandas==2.2.3
 scikit-learn==1.5.2
