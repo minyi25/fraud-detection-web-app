@@ -257,7 +257,7 @@
         const outputDiv = document.getElementById('output');
         var recognizing = false;
         let interval = 10; // Fetch every x characters
-        let wordTrack = 0;
+        let charTrack = 0;
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
         recognition.lang = 'en-US';
@@ -281,8 +281,8 @@
                 .join(" ");
 
             viewModel.outputText(finalTranscript);
-            if (finalTranscript.length > wordTrack) {
-                wordTrack = finalTranscript.length + interval;
+            if (finalTranscript.length > charTrack) {
+                charTrack = finalTranscript.length + interval;
                 fetch("/api/predict", {
                     method: "POST",
                     headers: {
