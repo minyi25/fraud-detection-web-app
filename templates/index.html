@@ -307,16 +307,17 @@
                             const negativeWords = [];
                             Object.entries(json.relevant_words || {}).forEach(([word, score]) => {
                                 if (score < 0) {
-                                    positiveWords.push({word: word, score: score.toFixed(4)});
+                                    positiveWords.push({word: word, score: Math.abs(score.toFixed(4))});
                                 } else {
                                     negativeWords.push({word: word, score: score.toFixed(4)});
                                 }
                             });
 
+                            // For sorting purpose
                             function compare(a, b) {
-                                if (Math.abs(a.score) > Math.abs(b.score)) {
+                                if (a.score > b.score) {
                                     return -1;
-                                } else if (Math.abs(a.score) < Math.abs(b.score)) {
+                                } else if (a.score < b.score) {
                                     return 1;
                                 } else {
                                     return 0;
