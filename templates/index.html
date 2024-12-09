@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Fraud Detection through Voice Input</title>
     <title>Fraud Call Detection</title>
     <script type='text/javascript' src='../static/knockout-min.js'></script>
     <style>
@@ -13,6 +16,8 @@
             min-height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            padding: 20px;
         }
 
         .label {
@@ -23,48 +28,222 @@
 
         .fraud {
             color: red;
+            font-size: 32px;
+            font-weight: bold;
         }
 
         .not-fraud {
             color: green;
+            font-size: 32px;
+            font-weight: bold;
         }
 
         .output-box {
-            width: 80%;
+            width: 100%;
             max-width: 600px;
             height: 150px;
-            border: 2px solid black;
+            border: 2px solid #ccc;
+            border-radius: 5px;
             margin-bottom: 20px;
-            /* Space between box and button */
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             font-size: 16px;
             overflow-y: auto;
+            padding: 10px;
+            background-color: #ffffff;
+        }
+
+        .contributing-words {
+            margin-top: 20px;
+            text-align: left;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .word-list {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .word-list h4 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .word-list span {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        .positive {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .negative {
+            background-color: #f8d7da;
+            color: #721c24;
         }
 
         button {
             padding: 10px 20px;
             font-size: 18px;
             cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        #startButton {
+            margin-bottom: 20px;
+        }
+
+        .consent-form {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f8f8f8;
+            padding: 5px;
+            text-align: center;
+            border-top: 1px solid #ccc;
+            transition: height 0.3s;
+        }
+
+        .consent-form.hidden {
+            height: 0;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .consent-form.show {
+            height: auto;
+            padding: 10px;
+        }
+
+        .consent-form label {
+            font-size: 12px;
+        }
+
+        .consent-form ul {
+            list-style: none;
+            padding: 0;
+            font-size: 12px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .consent-form ul li {
+            margin-bottom: 5px;
+        }
+
+        .consent-form button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
         }
     </style>
 </head>
 
 <body>
+    <h1>Real-Time Fraud Detection through Voice Input</h1>
+
     <div>
-        <span data-bind="text: fraudStatusLabel, css: fraudStatusClass" class="label"></span>
+        <span data-bind="visible: hasResult, text: fraudStatusLabel, css: fraudStatusClass" class="label"></span>
     </div>
     <div class="output-box" id="outputBox" data-bind="text: outputText">
     </div>
+    <div id="contributingWords" class="contributing-words"
+        data-bind="visible: nonFraudulentWords().length > 0 || fraudulentWords().length > 0">
+        <div class="word-list" data-bind="visible: nonFraudulentWords().length > 0">
+            <h4>Non-Fraudulent Indicators:</h4>
+            <div data-bind="foreach: nonFraudulentWords">
+                <span class="positive" data-bind="text: $data"></span>
+            </div>
+        </div>
+        <div class="word-list" data-bind="visible: fraudulentWords().length > 0">
+            <h4>Fraudulent Indicators:</h4>
+            <div data-bind="foreach: fraudulentWords">
+                <span class="negative" data-bind="text: $data"></span>
+            </div>
+        </div>
+    </div>
+
     <button id="startButton">Start Voice Input</button>
+
+    <div class="consent-form hidden" id="consentForm">
+        <form>
+            <label for="consent">
+                <input type="checkbox" id="consent" name="consent" required>
+                I consent to the collection and processing of my personal data during this conversation solely for the
+                purpose of detecting and preventing fraud. I understand that no data will be stored, and if fraud is
+                detected, my data may be shared with the relevant authorities, as required by law.
+            </label>
+            <div>
+                <p>By consenting, I acknowledge that:</p>
+                <ul>
+                    <li>My data will not be stored permanently and will only be processed in real-time during this
+                        conversation for fraud detection purposes.</li>
+                    <li>Any sensitive data shared during the conversation will be handled securely and will not be
+                        retained after the conversation ends.</li>
+                    <li>I have the right to request clarification or access to any information related to this
+                        conversation, in accordance with the privacy policy.</li>
+                    <li>I understand that if fraud is detected during this conversation, my data may be shared with
+                        legal authorities, as part of compliance with legal obligations.</li>
+                </ul>
+            </div>
+            <button type="submit">Accept Consent</button>
+        </form>
+    </div>
+
+    <button onclick="toggleConsent()">Show Consent</button>
+
+    <script>
+        function toggleConsent() {
+            const consentForm = document.getElementById('consentForm');
+            consentForm.classList.toggle('hidden');
+            consentForm.classList.toggle('show');
+        }
+    </script>
 
     <script>
         var viewModel = {
             outputText: ko.observable(''),
+            hasResult: ko.observable(false),
             isFraud: ko.observable(false),
+            nonFraudulentWords: ko.observableArray([]),
+            fraudulentWords: ko.observableArray([]),
         };
+
+        function resetVariables() {
+            viewModel.outputText('')
+            viewModel.hasResult(false)
+            viewModel.isFraud(false)
+            viewModel.nonFraudulentWords([])
+            viewModel.fraudulentWords([])
+        }
 
         viewModel.fraudStatusLabel = ko.computed(() => {
             return viewModel.isFraud() ? "Fraud" : "Not Fraud";
@@ -92,6 +271,7 @@
         }
         recognition.onend = function () {
             recognizing = false;
+            resetVariables()
             startButton.textContent = 'Start Voice Input';
         }
         recognition.onresult = function (event) {
@@ -108,16 +288,32 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({"text": finalTranscript})
+                    body: JSON.stringify({ "text": finalTranscript })
                 })
-                .then(res => res.json())
-                .then(json => {
-                    try {
-                        json.prediction ? viewModel.isFraud(true) : viewModel.isFraud(false);
-                    } catch {
-                        console.log("Error")
-                    }
-                })
+                    .then(res => res.json())
+                    .then(json => {
+                        try {
+                            viewModel.hasResult(true)
+                            json.prediction ? viewModel.isFraud(true) : viewModel.isFraud(false);
+
+                            const positiveWords = [];
+                            const negativeWords = [];
+                            Object.entries(json.relevant_words || {}).forEach(([word, score]) => {
+                                if (score < 0) {
+                                    positiveWords.push(word);
+                                } else {
+                                    negativeWords.push(word);
+                                }
+                            });
+
+                            viewModel.nonFraudulentWords(positiveWords);
+                            viewModel.fraudulentWords(negativeWords);
+
+                        } catch (err) {
+                            console.log("Error")
+                            console.log(err)
+                        }
+                    })
             }
         }
 

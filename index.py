@@ -5049,16 +5049,11 @@ def text_transform_custom(message):
 def explain_prediction(text):
     text_tfidf = tfidf_vectorizer.transform(text)
     prediction = model.predict(text_tfidf)[0]
-
-    # Get the feature indices with non-zero values for the input text
+    
     feature_indices = text_tfidf.nonzero()[1]
     feature_names = tfidf_vectorizer.get_feature_names_out()
     relevant_feature_names = [feature_names[i] for i in feature_indices]
-
-    # Filter the dictionary to only include relevant features
     relevant_features_dict = {k: v for k, v in word_coefficients.items() if k in relevant_feature_names}
-
-    # Sort the filtered dictionary by value (coefficient) in descending order
     sorted_relevant_features = dict(sorted(relevant_features_dict.items(), key=lambda item: item[1], reverse=True))
 
     return prediction, sorted_relevant_features
@@ -5072,7 +5067,9 @@ def root():
            )
 def api():
     try:
-        # Get JSON payload
+        if request.json is None:
+            return jsonify({"error": "The body is invalid"}), 500
+        
         data = request.json
 
         # Validate payload
@@ -5081,7 +5078,6 @@ def api():
         
         # Preprocess the text
         raw_text = data['text']
-        # raw_text = "Hello, this is John from the Fraud Prevention Department at your bank. We've detected unauthorized activity on your account, and it's critical that we address this immediately to secure your funds. A suspicious transaction of $2,000 was flagged, and we've temporarily frozen your account for your safety."
         processed_text = [text_transform_custom(raw_text)]
         result, features = explain_prediction(processed_text)
         response = {
@@ -5092,7 +5088,6 @@ def api():
         }
         return jsonify(response)
     except Exception as e:
-            # Handle errors gracefully
             print(e)
             return jsonify({"error": str(e)}), 500
 
