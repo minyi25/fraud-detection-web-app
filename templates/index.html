@@ -75,7 +75,7 @@
             color: #333;
         }
 
-        .word-list span {
+        .word-list > div > div {
             padding: 5px 10px;
             border-radius: 3px;
             margin: 5px;
@@ -180,13 +180,19 @@
         <div class="word-list" data-bind="visible: nonFraudulentWords().length > 0">
             <h4>Non-Fraudulent Indicators:</h4>
             <div data-bind="foreach: nonFraudulentWords">
-                <span class="positive" data-bind="text: $data"></span>
+                <div class="positive">
+                    <div data-bind="text: word"></div>
+                    <div data-bind="text: score"></div>
+                </div>
             </div>
         </div>
         <div class="word-list" data-bind="visible: fraudulentWords().length > 0">
             <h4>Fraudulent Indicators:</h4>
             <div data-bind="foreach: fraudulentWords">
-                <span class="negative" data-bind="text: $data"></span>
+                <div class="negative">
+                    <div data-bind="text: word"></div>
+                    <div data-bind="text: score"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -301,14 +307,24 @@
                             const negativeWords = [];
                             Object.entries(json.relevant_words || {}).forEach(([word, score]) => {
                                 if (score < 0) {
-                                    positiveWords.push(word);
+                                    positiveWords.push({word: word, score: score.toFixed(4)});
                                 } else {
-                                    negativeWords.push(word);
+                                    negativeWords.push({word: word, score: score.toFixed(4)});
                                 }
                             });
 
-                            viewModel.nonFraudulentWords(positiveWords);
-                            viewModel.fraudulentWords(negativeWords);
+                            function compare(a, b) {
+                                if (Math.abs(a.score) > Math.abs(b.score)) {
+                                    return -1;
+                                } else if (Math.abs(a.score) < Math.abs(b.score)) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            }
+
+                            viewModel.nonFraudulentWords(positiveWords.sort(compare));
+                            viewModel.fraudulentWords(negativeWords.sort(compare));
 
                         } catch (err) {
                             console.log("Error")
