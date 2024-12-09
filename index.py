@@ -5090,7 +5090,6 @@ def api():
             "prediction": bool(result),
             "relevant_words": features
         }
-        print(result)
         return jsonify(response)
     except Exception as e:
             # Handle errors gracefully
@@ -5098,4 +5097,4 @@ def api():
             return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':  
-   app.run(debug=True)  
+   app.run()  
