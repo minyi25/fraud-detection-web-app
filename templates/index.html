@@ -271,6 +271,7 @@
         }
         recognition.onend = function () {
             recognizing = false;
+            charTrack = 0;
             resetVariables()
             startButton.textContent = 'Start Voice Input';
         }
