@@ -75,7 +75,7 @@
             color: #333;
         }
 
-        .word-list > div > div {
+        .word-list>div>div {
             padding: 5px 10px;
             border-radius: 3px;
             margin: 5px;
@@ -117,57 +117,53 @@
             margin-bottom: 20px;
         }
 
-        .consent-form {
+        .overlay {
             position: fixed;
-            bottom: 0;
+            top: 0;
+            left: 0;
             width: 100%;
-            background-color: #f8f8f8;
-            padding: 5px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+        }
+
+        /* Style for the pop-up */
+        .popup {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             text-align: center;
-            border-top: 1px solid #ccc;
-            transition: height 0.3s;
         }
 
-        .consent-form.hidden {
-            height: 0;
-            overflow: hidden;
-            padding: 0;
-        }
-
-        .consent-form.show {
-            height: auto;
-            padding: 10px;
-        }
-
-        .consent-form label {
-            font-size: 12px;
-        }
-
-        .consent-form ul {
-            list-style: none;
-            padding: 0;
-            font-size: 12px;
-            margin: 10px 0;
-            display: none;
-        }
-
-        .consent-form ul li {
-            margin-bottom: 5px;
-        }
-
-        .consent-form button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
+        /* Show the overlay */
+        .overlay.active {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
 
 <body>
+    <div class="overlay" id="popupOverlay">
+        <div class="popup">
+            <h2>Informed Consent</h2>
+            <p>We value your privacy and are committed to protecting your data. Please note the following:</p>
+            <ul style="text-align: left; margin: 10px 0;">
+                <li>No personal data or identifiable information will be stored during this process.</li>
+                <li>If fraudulent activity is confirmed based on your inputs, it will be reported to the appropriate
+                    authority for necessary action.</li>
+                <li>By proceeding, you acknowledge and agree to these terms.</li>
+            </ul>
+            <button class="close-btn" id="closePopup">I Understand</button>
+        </div>
+    </div>
+
     <h1>Real-Time Fraud Detection through Voice Input</h1>
 
     <div>
@@ -199,41 +195,18 @@
 
     <button id="startButton">Start Voice Input</button>
 
-    <div class="consent-form hidden" id="consentForm">
-        <form>
-            <label for="consent">
-                <input type="checkbox" id="consent" name="consent" required>
-                I consent to the collection and processing of my personal data during this conversation solely for the
-                purpose of detecting and preventing fraud. I understand that no data will be stored, and if fraud is
-                detected, my data may be shared with the relevant authorities, as required by law.
-            </label>
-            <div>
-                <p>By consenting, I acknowledge that:</p>
-                <ul>
-                    <li>My data will not be stored permanently and will only be processed in real-time during this
-                        conversation for fraud detection purposes.</li>
-                    <li>Any sensitive data shared during the conversation will be handled securely and will not be
-                        retained after the conversation ends.</li>
-                    <li>I have the right to request clarification or access to any information related to this
-                        conversation, in accordance with the privacy policy.</li>
-                    <li>I understand that if fraud is detected during this conversation, my data may be shared with
-                        legal authorities, as part of compliance with legal obligations.</li>
-                </ul>
-            </div>
-            <button type="submit">Accept Consent</button>
-        </form>
-    </div>
-
-    <button onclick="toggleConsent()">Show Consent</button>
-
     <script>
-        function toggleConsent() {
-            const consentForm = document.getElementById('consentForm');
-            consentForm.classList.toggle('hidden');
-            consentForm.classList.toggle('show');
-        }
-    </script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const popupOverlay = document.getElementById('popupOverlay');
+            const closePopup = document.getElementById('closePopup');
 
+            popupOverlay.classList.add('active');
+
+            closePopup.addEventListener('click', function () {
+                popupOverlay.classList.remove('active');
+            });
+        });
+    </script>
     <script>
         var viewModel = {
             outputText: ko.observable(''),
@@ -252,7 +225,7 @@
         }
 
         viewModel.fraudStatusLabel = ko.computed(() => {
-            return viewModel.isFraud() ? "Fraud" : "Not Fraud";
+            return viewModel.isFraud() ? "Suspicious" : "Neutral";
         });
         viewModel.fraudStatusClass = ko.computed(() => {
             return viewModel.isFraud() ? "fraud" : "not-fraud";
@@ -307,9 +280,9 @@
                             const negativeWords = [];
                             Object.entries(json.relevant_words || {}).forEach(([word, score]) => {
                                 if (score < 0) {
-                                    positiveWords.push({word: word, score: Math.abs(score.toFixed(4))});
+                                    positiveWords.push({ word: word, score: Math.abs(score.toFixed(4)) });
                                 } else {
-                                    negativeWords.push({word: word, score: score.toFixed(4)});
+                                    negativeWords.push({ word: word, score: score.toFixed(4) });
                                 }
                             });
 
