@@ -237,81 +237,107 @@
         var recognizing = false;
         let interval = 10; // Fetch every x characters
         let charTrack = 0;
+        const deviceName = "Stereo Mix"
 
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
-        recognition.lang = 'en-US';
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.onstart = function () {
-            recognizing = true;
-            startButton.textContent = 'Listening...';
-        }
-        recognition.onerror = function (event) {
-        }
-        recognition.onend = function () {
-            recognizing = false;
-            charTrack = 0;
-            resetVariables()
-            startButton.textContent = 'Start Voice Input';
-        }
-        recognition.onresult = function (event) {
-            const resultList = Array.from(event.results);
-            const finalTranscript = resultList
-                .map(result => result[0].transcript)
-                .join(" ");
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const stereoMixDevice = devices.find(device =>
+                    device.label.includes(deviceName) && device.kind === "audioinput"
+                );
 
-            viewModel.outputText(finalTranscript);
-            if (finalTranscript.length > charTrack) {
-                charTrack = finalTranscript.length + interval;
-                fetch("/api/predict", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ "text": finalTranscript })
-                })
-                    .then(res => res.json())
-                    .then(json => {
-                        try {
-                            viewModel.hasResult(true)
-                            json.prediction ? viewModel.isFraud(true) : viewModel.isFraud(false);
+                if (stereoMixDevice) {
+                    return navigator.mediaDevices.getUserMedia({
+                        audio: { deviceId: { exact: stereoMixDevice.deviceId } }
+                    });
+                } else {
+                    throw new Error("Stereo Mix device not found.");
+                }
+            })
+            .then(stream => {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+                const audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(stream);
 
-                            const positiveWords = [];
-                            const negativeWords = [];
-                            Object.entries(json.relevant_words || {}).forEach(([word, score]) => {
-                                if (score < 0) {
-                                    positiveWords.push({ word: word, score: Math.abs(score.toFixed(4)) });
-                                } else {
-                                    negativeWords.push({ word: word, score: score.toFixed(4) });
+                recognition.lang = 'en-US';
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.onstart = function () {
+                    recognizing = true;
+                    startButton.textContent = 'Listening...';
+                }
+                recognition.onerror = function (event) {
+                }
+                recognition.onend = function () {
+                    recognizing = false;
+                    charTrack = 0;
+                    resetVariables()
+                    startButton.textContent = 'Start Voice Input';
+                }
+                recognition.onresult = function (event) {
+                    const resultList = Array.from(event.results);
+                    const finalTranscript = resultList
+                        .map(result => result[0].transcript)
+                        .join(" ")
+                        .trim();
+
+                    viewModel.outputText(finalTranscript);
+                    if (finalTranscript.length > charTrack) {
+                        charTrack = finalTranscript.length + interval;
+                        fetch("/api/predict", {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ "text": finalTranscript })
+                        })
+                            .then(res => res.json())
+                            .then(json => {
+                                try {
+                                    viewModel.hasResult(true)
+                                    json.prediction ? viewModel.isFraud(true) : viewModel.isFraud(false);
+
+                                    const positiveWords = [];
+                                    const negativeWords = [];
+                                    Object.entries(json.relevant_words || {}).forEach(([word, score]) => {
+                                        if (score < 0) {
+                                            positiveWords.push({ word: word, score: Math.abs(score.toFixed(4)) });
+                                        } else {
+                                            negativeWords.push({ word: word, score: score.toFixed(4) });
+                                        }
+                                    });
+
+                                    // For sorting purpose
+                                    function compare(a, b) {
+                                        if (a.score > b.score) {
+                                            return -1;
+                                        } else if (a.score < b.score) {
+                                            return 1;
+                                        } else {
+                                            return 0;
+                                        }
+                                    }
+
+                                    viewModel.nonFraudulentWords(positiveWords.sort(compare));
+                                    viewModel.fraudulentWords(negativeWords.sort(compare));
+
+                                } catch (err) {
+                                    console.log("Error")
+                                    console.log(err)
                                 }
-                            });
+                            })
+                    }
+                }
 
-                            // For sorting purpose
-                            function compare(a, b) {
-                                if (a.score > b.score) {
-                                    return -1;
-                                } else if (a.score < b.score) {
-                                    return 1;
-                                } else {
-                                    return 0;
-                                }
-                            }
+                startButton.addEventListener('click', () => {
+                    if (!recognizing) recognition.start();
+                    else recognition.stop();
+                });
+            })
+            .catch(err => {
+                console.error("Error accessing Stereo Mix:", err);
+            });
 
-                            viewModel.nonFraudulentWords(positiveWords.sort(compare));
-                            viewModel.fraudulentWords(negativeWords.sort(compare));
 
-                        } catch (err) {
-                            console.log("Error")
-                            console.log(err)
-                        }
-                    })
-            }
-        }
-
-        startButton.addEventListener('click', () => {
-            if (!recognizing) recognition.start();
-            else recognition.stop();
-        });
 
         ko.applyBindings(viewModel);
 
