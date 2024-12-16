@@ -270,7 +270,16 @@
                     },
                     body: JSON.stringify({ "text": finalTranscript })
                 })
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) {
+                            if (res.status === 500) {
+                                throw new Error("Server error (500): Internal Server Error.");
+                            } else {
+                                throw new Error(`HTTP error! status: ${res.status}`);
+                            }
+                        }
+                        return res.json();
+                    })
                     .then(json => {
                         try {
                             viewModel.hasResult(true)
@@ -304,6 +313,8 @@
                             console.log("Error")
                             console.log(err)
                         }
+                    }).catch(error => {
+                        console.error("Fetch error");
                     })
             }
         }
