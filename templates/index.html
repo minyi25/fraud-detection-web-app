@@ -117,6 +117,11 @@
             margin-bottom: 20px;
         }
 
+        #reportButton {
+            margin-bottom: 20px;
+            background-color: red;
+        }
+
         .overlay {
             position: fixed;
             top: 0;
@@ -132,7 +137,6 @@
             transition: visibility 0s, opacity 0.3s;
         }
 
-        /* Style for the pop-up */
         .popup {
             background: #fff;
             padding: 20px;
@@ -141,10 +145,17 @@
             text-align: center;
         }
 
-        /* Show the overlay */
         .overlay.active {
             visibility: visible;
             opacity: 1;
+        }
+
+        #confirmationFraudOverlay textarea {
+            width: 95%;
+            max-width: 95%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -161,6 +172,27 @@
                 <li>By proceeding, you acknowledge and agree to these terms.</li>
             </ul>
             <button class="close-btn" id="closePopup">I Understand</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="confirmationFraudOverlay">
+        <div class="popup">
+            <h2>Are you sure you want to report this as fraud? You can redact sensitive information before proceeding.
+            </h2>
+            <textarea data-bind="text: reportText" rows="5"
+                style="width: 100%; padding: 10px; margin-bottom: 20px;"></textarea>
+            <p>Confirm that the content is fraudulent and safe to report:</p>
+            <button id="confirmFraudButton">Confirm Fraud</button>
+            <button id="cancelFraudButton">Cancel</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="fraudReportSuccessPopup">
+        <div class="popup">
+            <h2>Thank you for your report!</h2>
+            <p>The NSRC will be notified. Your efforts help make the community
+                safer!</p>
+            <button id="closeFraudReportSuccessPopup">Close</button>
         </div>
     </div>
 
@@ -194,30 +226,57 @@
     </div>
 
     <button id="startButton">Start Voice Input</button>
+    <button data-bind="visible: showReportBtn" id="reportButton">Report Fraud</button>
 
+    <!-- informed consent JS -->
+    <!-- fraud report success JS -->
+    <!-- fraud confirmation JS -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const confirmationFraudOverlay = document.getElementById('confirmationFraudOverlay');
             const popupOverlay = document.getElementById('popupOverlay');
             const closePopup = document.getElementById('closePopup');
+            const closeFraudReportSuccessPopup = document.getElementById('closeFraudReportSuccessPopup');
+            const reportButton = document.getElementById('reportButton');
+            const cancelFraudButton = document.getElementById('cancelFraudButton');
+            const fraudReportSuccessPopup = document.getElementById('fraudReportSuccessPopup');
 
             popupOverlay.classList.add('active');
+
+            reportButton.addEventListener('click', function () {
+                confirmationFraudOverlay.classList.add('active');
+            });
 
             closePopup.addEventListener('click', function () {
                 popupOverlay.classList.remove('active');
             });
+
+            closeFraudReportSuccessPopup.addEventListener('click', function () {
+                fraudReportSuccessPopup.classList.remove('active');
+            });
+
+            cancelFraudButton.addEventListener('click', function () {
+                confirmationFraudOverlay.classList.remove('active');
+            });
         });
     </script>
+
+    <!-- speech detection JS -->
     <script>
         var viewModel = {
             outputText: ko.observable(''),
+            reportText: ko.observable(''),
             hasResult: ko.observable(false),
             isFraud: ko.observable(false),
+            showReportBtn: ko.observable(false),
             nonFraudulentWords: ko.observableArray([]),
             fraudulentWords: ko.observableArray([]),
         };
 
         function resetVariables() {
+            viewModel.reportText('')
             viewModel.outputText('')
+            viewModel.showReportBtn(false)
             viewModel.hasResult(false)
             viewModel.isFraud(false)
             viewModel.nonFraudulentWords([])
@@ -243,6 +302,7 @@
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onstart = function () {
+            resetVariables()
             recognizing = true;
             startButton.textContent = 'Listening...';
         }
@@ -251,8 +311,12 @@
         recognition.onend = function () {
             recognizing = false;
             charTrack = 0;
-            resetVariables()
             startButton.textContent = 'Start Voice Input';
+
+            if (viewModel.outputText()) {
+                viewModel.reportText(viewModel.outputText())
+                viewModel.showReportBtn(true)
+            }
         }
         recognition.onresult = function (event) {
             const resultList = Array.from(event.results);
@@ -322,6 +386,18 @@
         startButton.addEventListener('click', () => {
             if (!recognizing) recognition.start();
             else recognition.stop();
+        });
+
+        const confirmFraudButton = document.getElementById('confirmFraudButton');
+        confirmFraudButton.addEventListener('click', () => {
+            const redactedContent = viewModel.reportText().trim();
+            if (redactedContent) {
+                // send api
+                console.log(redactedContent);
+                document.getElementById('confirmationFraudOverlay').classList.remove('active');
+                document.getElementById('fraudReportSuccessPopup').classList.add('active');
+                resetVariables()
+            }
         });
 
         ko.applyBindings(viewModel);
