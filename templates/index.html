@@ -117,6 +117,10 @@
             margin-bottom: 20px;
         }
 
+        #pauseButton {
+            margin-bottom: 20px;
+        }
+
         #reportButton {
             margin-bottom: 20px;
             background-color: red;
@@ -224,8 +228,8 @@
             </div>
         </div>
     </div>
-
     <button id="startButton">Start Voice Input</button>
+    <button data-bind="visible: showPauseBtn" id="pauseButton">Pause</button>
     <button data-bind="visible: showReportBtn" id="reportButton">Report Fraud</button>
 
     <!-- informed consent JS -->
@@ -271,6 +275,7 @@
             showReportBtn: ko.observable(false),
             nonFraudulentWords: ko.observableArray([]),
             fraudulentWords: ko.observableArray([]),
+            showPauseBtn: ko.observable(false),
         };
 
         function resetVariables() {
@@ -292,41 +297,36 @@
 
 
         const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
         const outputDiv = document.getElementById('output');
-        var recognizing = false;
         let interval = 10; // Fetch every x characters
         let charTrack = 0;
+        let recognizing = false;
+        let pause = false;
+        let transcript = "";
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
         recognition.lang = 'en-US';
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onstart = function () {
-            resetVariables()
-            recognizing = true;
-            startButton.textContent = 'Listening...';
         }
         recognition.onerror = function (event) {
         }
         recognition.onend = function () {
-            recognizing = false;
-            charTrack = 0;
-            startButton.textContent = 'Start Voice Input';
-
-            if (viewModel.outputText()) {
-                viewModel.reportText(viewModel.outputText())
-                viewModel.showReportBtn(true)
-            }
         }
         recognition.onresult = function (event) {
             const resultList = Array.from(event.results);
-            const finalTranscript = resultList
+            const speechTranscript = resultList
                 .map(result => result[0].transcript)
                 .join(" ");
+            const finalTranscript = transcript.concat(" ", speechTranscript);
 
-            viewModel.outputText(finalTranscript);
+            if (!pause) {
+                viewModel.outputText(finalTranscript);
+            }
             if (finalTranscript.length > charTrack) {
-                charTrack = finalTranscript.length + interval;
+                charTrack = speechTranscript.length + interval;
                 fetch("/api/predict", {
                     method: "POST",
                     headers: {
@@ -384,8 +384,41 @@
         }
 
         startButton.addEventListener('click', () => {
-            if (!recognizing) recognition.start();
-            else recognition.stop();
+            if (!recognizing) {
+                recognizing = true;
+                viewModel.showPauseBtn(true);
+                startButton.textContent = "Stop";
+                resetVariables();
+                recognition.start();
+            } else {
+                recognizing = false;
+                viewModel.showPauseBtn(false);
+                pause = false;
+                pauseButton.textContent = "Pause";
+                startButton.textContent = "Start Voice Input";
+                recognition.stop();
+
+                charTrack = 0;
+                transcript = "";
+
+                if (viewModel.outputText()) {
+                    viewModel.reportText(viewModel.outputText())
+                    viewModel.showReportBtn(true)
+                }
+            }
+        });
+
+        pauseButton.addEventListener('click', () => {
+            if (!pause) {
+                pauseButton.textContent = "Continue";
+                pause = true;
+                transcript = viewModel.outputText();
+                recognition.stop();
+            } else {
+                pauseButton.textContent = "Pause";
+                pause = false;
+                recognition.start();
+            }
         });
 
         const confirmFraudButton = document.getElementById('confirmFraudButton');
