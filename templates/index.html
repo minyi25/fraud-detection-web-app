@@ -344,7 +344,7 @@
                 viewModel.outputText(finalTranscript);
             }
             if (finalTranscript.length > charTrack) {
-                charTrack = speechTranscript.length + interval;
+                charTrack = finalTranscript.length + interval;
                 fetch("/api/predict", {
                     method: "POST",
                     headers: {
