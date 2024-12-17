@@ -10,6 +10,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 
 nltk.download('stopwords')
+nltk.download('wordnet')
 
 app = Flask(__name__)
 
