@@ -4,10 +4,12 @@ import inflect
 import pickle
 import re
 import string
+import nltk
 
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 
+nltk.download('stopwords')
 
 app = Flask(__name__)
 
