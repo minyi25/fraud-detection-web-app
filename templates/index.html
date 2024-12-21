@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real-Time Fraud Detection through Voice Input</title>
-    <title>Fraud Call Detection</title>
     <script type='text/javascript' src='../static/knockout-min.js'></script>
     <style>
         body {
@@ -126,6 +125,10 @@
             background-color: rgb(117, 111, 111);
         }
 
+        #pauseButton {
+            margin-bottom: 20px;
+        }
+
         #reportButton {
             margin-bottom: 20px;
             background-color: rgba(225, 26, 26, 0.933);
@@ -169,6 +172,11 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 16px;
+        }
+
+        .button-container div {
+            text-align: center
+            ;
         }
     </style>
 </head>
@@ -237,12 +245,20 @@
             </div>
         </div>
     </div>
-
     <div class="button-container">
-        <button id="startButton">Start Voice Input</button>
-        <button data-bind="visible: showRestartBtn" id="restartButton">Restart</button>
+        <div>
+            <button id="startButton">Start Voice Input</button>
+        </div>
+        <div>
+            <button data-bind="visible: showRestartBtn" id="restartButton">Restart</button>
+        </div>
+        <div>
+            <button data-bind="visible: showPauseBtn" id="pauseButton">Pause</button>
+        </div>
+        <div>
+            <button data-bind="visible: showReportBtn" id="reportButton">Report Fraud</button>
+        </div>
     </div>
-    <button data-bind="visible: showReportBtn" id="reportButton">Report Fraud</button>
 
     <button id="viewConsentButton" style="position: fixed; right: 10px; bottom: 10px; border-radius: 50%;">
         <img height="25" width="25" src="../static/consent.png" alt="">
@@ -300,6 +316,7 @@
             showRestartBtn: ko.observable(false),
             nonFraudulentWords: ko.observableArray([]),
             fraudulentWords: ko.observableArray([]),
+            showPauseBtn: ko.observable(false),
         };
 
         function resetVariables() {
@@ -322,41 +339,34 @@
 
 
         const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
         const outputDiv = document.getElementById('output');
-        var recognizing = false;
         let interval = 10; // Fetch every x characters
-        let charTrack = 0;
+        let charTrack = 0 + interval;
+        let recognizing = false;
+        let pause = false;
+        let transcript = "";
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
         recognition.lang = 'en-US';
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onstart = function () {
-            resetVariables()
-            recognizing = true;
-            startButton.textContent = 'Listening...';
         }
         recognition.onerror = function (event) {
         }
         recognition.onend = function () {
-            recognizing = false;
-            charTrack = 0;
-            startButton.textContent = 'Start Voice Input';
-
-            if (viewModel.outputText()) {
-                viewModel.reportText(viewModel.outputText())
-                viewModel.showReportBtn(true)
-                viewModel.showRestartBtn(true)
-            }
         }
         recognition.onresult = function (event) {
             const resultList = Array.from(event.results);
-            const finalTranscript = resultList
+            const speechTranscript = resultList
                 .map(result => result[0].transcript)
-                .join(" ")
-                .trim();
+                .join(" ");
+            const finalTranscript = transcript.concat(" ", speechTranscript);
 
-            viewModel.outputText(finalTranscript);
+            if (!pause) {
+                viewModel.outputText(finalTranscript);
+            }
             if (finalTranscript.length > charTrack) {
                 charTrack = finalTranscript.length + interval;
                 fetch("/api/predict", {
@@ -416,8 +426,42 @@
         }
 
         startButton.addEventListener('click', () => {
-            if (!recognizing) recognition.start();
-            else recognition.stop();
+            if (!recognizing) {
+                recognizing = true;
+                viewModel.showPauseBtn(true);
+                startButton.textContent = "Stop";
+                resetVariables();
+                recognition.start();
+            } else {
+                recognizing = false;
+                viewModel.showPauseBtn(false);
+                pause = false;
+                pauseButton.textContent = "Pause";
+                startButton.textContent = "Start Voice Input";
+                viewModel.showRestartBtn(true)
+                recognition.stop();
+
+                charTrack = 0;
+                transcript = "";
+
+                if (viewModel.outputText()) {
+                    viewModel.reportText(viewModel.outputText())
+                    viewModel.showReportBtn(true)
+                }
+            }
+        });
+
+        pauseButton.addEventListener('click', () => {
+            if (!pause) {
+                pauseButton.textContent = "Continue";
+                pause = true;
+                transcript = viewModel.outputText();
+                recognition.stop();
+            } else {
+                pauseButton.textContent = "Pause";
+                pause = false;
+                recognition.start();
+            }
         });
 
         const confirmFraudButton = document.getElementById('confirmFraudButton');
