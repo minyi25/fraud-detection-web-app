@@ -244,6 +244,10 @@
     </div>
     <button data-bind="visible: showReportBtn" id="reportButton">Report Fraud</button>
 
+    <button id="viewConsentButton" style="position: fixed; right: 0; bottom: 0;">
+        View Consent
+    </button>
+
     <!-- informed consent JS -->
     <!-- fraud report success JS -->
     <!-- fraud confirmation JS -->
@@ -255,16 +259,24 @@
             const closeFraudReportSuccessPopup = document.getElementById('closeFraudReportSuccessPopup');
             const reportButton = document.getElementById('reportButton');
             const cancelFraudButton = document.getElementById('cancelFraudButton');
+            const viewConsentButton = document.getElementById('viewConsentButton');
             const fraudReportSuccessPopup = document.getElementById('fraudReportSuccessPopup');
 
             popupOverlay.classList.add('active');
+            viewConsentButton.style.visibility = 'hidden';
 
-            reportButton.addEventListener('click', function () {
-                confirmationFraudOverlay.classList.add('active');
+            viewConsentButton.addEventListener('click', function () {
+                popupOverlay.classList.add('active');
+                viewConsentButton.style.visibility = 'hidden';
             });
 
             closePopup.addEventListener('click', function () {
                 popupOverlay.classList.remove('active');
+                viewConsentButton.style.visibility = 'visible';
+            });
+
+            reportButton.addEventListener('click', function () {
+                confirmationFraudOverlay.classList.add('active');
             });
 
             closeFraudReportSuccessPopup.addEventListener('click', function () {
