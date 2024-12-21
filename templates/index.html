@@ -187,6 +187,7 @@
             <h2>Informed Consent</h2>
             <p>We value your privacy and are committed to protecting your data. Please note the following:</p>
             <ul style="text-align: left; margin: 10px 0;">
+                <li>This web application is only for educational purpose. We shall not be liable for any damages caused by the usage of this application.</li>
                 <li>No personal data or identifiable information will be stored during this process.</li>
                 <li>If fraudulent activity is confirmed based on your inputs, it will be reported to the appropriate
                     authority for necessary action.</li>
@@ -278,17 +279,11 @@
             const viewConsentButton = document.getElementById('viewConsentButton');
             const fraudReportSuccessPopup = document.getElementById('fraudReportSuccessPopup');
 
-            popupOverlay.classList.add('active');
             viewConsentButton.style.visibility = 'hidden';
 
             viewConsentButton.addEventListener('click', function () {
                 popupOverlay.classList.add('active');
                 viewConsentButton.style.visibility = 'hidden';
-            });
-
-            closePopup.addEventListener('click', function () {
-                popupOverlay.classList.remove('active');
-                viewConsentButton.style.visibility = 'visible';
             });
 
             reportButton.addEventListener('click', function () {
@@ -427,11 +422,29 @@
 
         startButton.addEventListener('click', () => {
             if (!recognizing) {
-                recognizing = true;
-                viewModel.showPauseBtn(true);
-                startButton.textContent = "Stop";
-                resetVariables();
-                recognition.start();
+                if (!localStorage.getItem('consent')) {
+                    popupOverlay.classList.add('active');
+
+                    closePopup.addEventListener('click', () => {
+                        // Listen for user to close pop up
+                        popupOverlay.classList.remove('active');
+                        localStorage.setItem('consent', 'true');
+                        viewConsentButton.style.visibility = 'visible';
+
+                        recognizing = true;
+                        viewModel.showPauseBtn(true);
+                        startButton.textContent = "Stop";
+                        resetVariables();
+                        recognition.start();
+                    });
+                } else {
+                    recognizing = true;
+                    viewModel.showPauseBtn(true);
+                    startButton.textContent = "Stop";
+                    resetVariables();
+                    recognition.start();
+                }
+                
             } else {
                 recognizing = false;
                 viewModel.showPauseBtn(false);
